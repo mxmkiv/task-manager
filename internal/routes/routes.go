@@ -11,8 +11,10 @@ func Setup(e *echo.Echo) {
 
 	//api := e.Group("/api/v1")
 
-	e.GET("/user", handler.UserHandler, middleware.TestMW)
-	e.GET("/task", handler.TaskHandler)
-	e.GET("/", handler.MainHandler)
+	//auth
+	e.POST("/auth/register", handler.RegisterHandler)
+	//e.POST("/auth/login", )
 
+	//protect
+	e.GET("/test", handler.TestHandler, middleware.AuthWiddleware)
 }
