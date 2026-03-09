@@ -7,14 +7,14 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-func Setup(e *echo.Echo) {
+func Setup(e *echo.Echo, h *handler.Handler) {
 
 	//api := e.Group("/api/v1")
 
 	//auth
-	e.POST("/auth/register", handler.RegisterHandler)
-	//e.POST("/auth/login", )
+	e.POST("/auth/register", h.RegisterHandler, middleware.GuestOnly)
+	e.POST("/auth/login", h.LoginHabdler, middleware.GuestOnly)
 
 	//protect
-	e.GET("/test", handler.TestHandler, middleware.AuthWiddleware)
+	e.GET("/test", h.TestHandler, middleware.AuthWiddleware)
 }

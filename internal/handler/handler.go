@@ -2,50 +2,55 @@ package handler
 
 import (
 	"net/http"
-	"task-manager/internal/auth"
 	"task-manager/internal/model"
+	"task-manager/internal/service"
 
 	"github.com/labstack/echo/v5"
 )
 
-type RequestData struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+type Handler struct {
+	authSrv *service.AuthService
 }
 
-type ResponseData struct {
-	User  model.User `json:"user"`
-	Token string     `json:"token"`
+func NewHandler(authSvc *service.AuthService) *Handler {
+	return &Handler{
+		authSrv: authSvc,
+	}
 }
 
-func RegisterHandler(ctx *echo.Context) error {
+func (h *Handler) RegisterHandler(ctx *echo.Context) error {
 
-	var getUserData RequestData
+	var getUserData model.RequestData
 	err := ctx.Bind(&getUserData)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid json format")
 	}
 
-	// validation
-	if len(getUserData.Login) < 3 || len(getUserData.Login) > 20 {
-		return echo.NewHTTPError(http.StatusBadRequest, "login must be between 3 and 20 characters")
-	}
-	if len(getUserData.Password) < 5 {
-		return echo.NewHTTPError(http.StatusBadRequest, "password must be at least 5 characters")
+	response, err := h.authSrv.Register(&getUserData)
+	if err != nil {
+		return err
 	}
 
-	user, err := model.NewUser(getUserData.Login, getUserData.Password)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "failed to create new user")
-	}
-
-	token, err := auth.GenerateToken(user.Id, user.Login)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "token generate error")
-	}
-	return ctx.JSON(http.StatusOK, ResponseData{User: *user, Token: token})
+	return ctx.JSON(http.StatusOK, response)
 }
 
-func TestHandler(ctx *echo.Context) error {
+func (h *Handler) LoginHabdler(ctx *echo.Context) error {
+
+	var getUserData model.RequestData
+	err := ctx.Bind(&getUserData)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid json format")
+	}
+
+	response, err := h.authSrv.Login(&getUserData)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, response)
+
+}
+
+func (h *Handler) TestHandler(ctx *echo.Context) error {
 	return ctx.String(http.StatusOK, "hello world")
 }

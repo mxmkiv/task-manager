@@ -16,8 +16,6 @@ type User struct {
 	UpdateAt  time.Time `json:"update_at"`
 }
 
-//Role type
-
 func NewUser(login, password string) (*User, error) {
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -50,4 +48,15 @@ type Task struct {
 	Deadline    time.Time  `json:"deadline"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdateAt    time.Time  `json:"update_at"`
+}
+
+// DTO
+type RequestData struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+type ResponseData struct {
+	User  User   `json:"user"`
+	Token string `json:"token"`
 }

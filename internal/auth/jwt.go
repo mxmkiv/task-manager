@@ -5,17 +5,9 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
-// env load
-func getSecretKey() string {
-	godotenv.Load(".env")
-	key := os.Getenv("SECRET_KEY")
-	return key
-}
-
-func GenerateToken(id int, login string) (string, error) {
+func GenerateToken(id int, login, secretKey string) (string, error) {
 	claims := jwt.MapClaims{
 		"id":    id,
 		"login": login,
@@ -23,7 +15,7 @@ func GenerateToken(id int, login string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(getSecretKey()))
+	return token.SignedString([]byte(secretKey))
 }
 
 func ParseToken(tokenStr string) error {

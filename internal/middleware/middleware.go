@@ -18,7 +18,6 @@ func AuthWiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusUnauthorized, "invalid authorization header format, expected 'Bearer <token>'")
 		}
 
-		//token := strings.TrimPrefix(authHeader, "Bearer ")
 		token := authHeader[7:]
 		if err := auth.ParseToken(token); err != nil {
 			return echo.NewHTTPError(http.StatusUnauthorized, "invalid token")
@@ -28,6 +27,21 @@ func AuthWiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func GuestOnly() {
+func GuestOnly(next echo.HandlerFunc) echo.HandlerFunc {
+
+	return func(c *echo.Context) error {
+		authHeader := c.Request().Header.Get("Authorization")
+
+		if authHeader == "" {
+			return next(c)
+		}
+
+		token := authHeader[7:]
+		if err := auth.ParseToken(token); err != nil {
+			return echo.NewHTTPError(http.StatusForbidden, "access denied: user already authenticated")
+		}
+
+		return next(c)
+	}
 
 }
