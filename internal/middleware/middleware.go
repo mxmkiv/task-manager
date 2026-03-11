@@ -45,3 +45,7 @@ func GuestOnly(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 
 }
+
+// func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
+
+// }

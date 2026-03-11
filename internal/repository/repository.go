@@ -22,9 +22,9 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 }
 
 func (u *UserRepository) Create(user *model.User) error {
-	query := "INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING id"
+	query := "INSERT INTO users (login, password_hash, role) VALUES ($1, $2, $3) RETURNING id;"
 
-	err := u.db.QueryRow(context.Background(), query, user.Login, user.PasswordHash).Scan(&user.Id)
+	err := u.db.QueryRow(context.Background(), query, user.Login, user.PasswordHash, user.Role).Scan(&user.Id)
 	if err != nil {
 		var dbErr *pgconn.PgError
 		if errors.As(err, &dbErr) {
@@ -41,7 +41,7 @@ func (u *UserRepository) Create(user *model.User) error {
 
 func (u *UserRepository) GetByLogin(login string) (*model.User, error) {
 
-	query := "SELECT * FROM users WHERE login = $1"
+	query := "SELECT * FROM users WHERE login = $1;"
 
 	user := &model.User{}
 	err := u.db.QueryRow(context.Background(), query, login).Scan(
@@ -55,5 +55,25 @@ func (u *UserRepository) GetByLogin(login string) (*model.User, error) {
 	}
 
 	return user, nil
+}
 
+func (u *UserRepository) GetAllUsers() (*[]model.User, error) {
+
+	query := "SELECT * FROM users LIMIT 50 OFFSET 0;"
+
+	rows, err := u.db.Query(context.Background(), query)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("no user founds")
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	res, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.User])
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }

@@ -28,10 +28,11 @@ func main() {
 		log.Fatal("database connection error", dbErr)
 	}
 
-	userEncoder := auth.NewUserEncoder()
-	userRepo := repository.NewUserRepository(dbPool)
-	srv := service.NewAuthService(config.SecretKey, userRepo, userEncoder)
-	handler := handler.NewHandler(srv)
+	userEncoder := auth.NewBcryptEncoder()
+	repository := repository.NewUserRepository(dbPool)
+	userService := service.NewUserService(repository)
+	authService := service.NewAuthService(config.SecretKey, repository, userEncoder)
+	handler := handler.NewHandler(authService, userService)
 
 	// services
 	// logger

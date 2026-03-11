@@ -16,5 +16,7 @@ func Setup(e *echo.Echo, h *handler.Handler) {
 	e.POST("/auth/login", h.LoginHabdler, middleware.GuestOnly)
 
 	//protect
-	e.GET("/test", h.TestHandler, middleware.AuthWiddleware)
+	protect := e.Group("", middleware.AuthWiddleware)
+	protect.GET("/test", h.TestHandler)
+	protect.GET("/users", h.AllUsersHandler)
 }

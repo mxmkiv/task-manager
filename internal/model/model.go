@@ -7,12 +7,24 @@ import (
 )
 
 type User struct {
-	Id           int    `json:"id"`
-	Login        string `json:"login"`
-	PasswordHash string `json:"-"`
-	//Role         string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdateAt  time.Time `json:"update_at"`
+	Id           int       `json:"id"`
+	Login        string    `json:"login"`
+	PasswordHash string    `json:"-"`
+	Role         string    `json:"role"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdateAt     time.Time `json:"update_at"`
+}
+
+type RoleType int
+
+const (
+	AdminType RoleType = iota
+	UserType
+)
+
+func (r RoleType) RoleToString() string {
+	mass := []string{"admin", "user"}
+	return mass[r]
 }
 
 func NewUser(login, password string, encoder auth.HashEncoder) (*User, error) {
@@ -25,6 +37,7 @@ func NewUser(login, password string, encoder auth.HashEncoder) (*User, error) {
 	return &User{
 		Login:        login,
 		PasswordHash: hash,
+		Role:         AdminType.RoleToString(),
 		CreatedAt:    time.Now(),
 		UpdateAt:     time.Now(),
 	}, nil
@@ -37,6 +50,11 @@ const (
 	InProcessStatus
 	DoneStatus
 )
+
+func (t TaskStatus) StatusToString() string {
+	mass := []string{"To do", "In process", "Done"}
+	return mass[t]
+}
 
 type Task struct {
 	Id          int        `json:"id"`
@@ -58,4 +76,12 @@ type RequestData struct {
 type ResponseData struct {
 	User  User   `json:"user"`
 	Token string `json:"token"`
+}
+
+type UserData struct {
+	Id        int       `json:"id"`
+	Login     string    `json:"login"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdateAt  time.Time `json:"update_at"`
 }
