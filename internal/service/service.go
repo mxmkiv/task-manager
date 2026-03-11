@@ -7,18 +7,19 @@ import (
 	"task-manager/internal/repository"
 
 	"github.com/labstack/echo/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
 	jwtSecretKey string
 	userRepo     *repository.UserRepository
+	encoder      auth.HashEncoder
 }
 
-func NewAuthService(key string, repo *repository.UserRepository) *AuthService {
+func NewAuthService(key string, repo *repository.UserRepository, encoder auth.HashEncoder) *AuthService {
 	return &AuthService{
 		jwtSecretKey: key,
 		userRepo:     repo,
+		encoder:      encoder,
 	}
 }
 
@@ -32,10 +33,8 @@ func (authSvc *AuthService) Register(dto *model.RequestData) (*model.ResponseDat
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "password must be at least 5 characters")
 	}
 
-	//exists check
-
 	//create user
-	user, err := model.NewUser(dto.Login, dto.Password)
+	user, err := model.NewUser(dto.Login, dto.Password, authSvc.encoder)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to create new user")
 	}
@@ -75,8 +74,8 @@ func (authSvc *AuthService) Login(dto *model.RequestData) (*model.ResponseData, 
 		}
 	}
 
-	//password check (will be submitted in a separate package)
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(dto.Password)); err != nil {
+	// password check
+	if err := authSvc.encoder.Compare(user.PasswordHash, dto.Password); err != nil {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized, "incorrect password")
 	}
 

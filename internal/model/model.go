@@ -2,9 +2,8 @@ package model
 
 import (
 	"log"
+	"task-manager/internal/auth"
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -16,16 +15,16 @@ type User struct {
 	UpdateAt  time.Time `json:"update_at"`
 }
 
-func NewUser(login, password string) (*User, error) {
+func NewUser(login, password string, encoder auth.HashEncoder) (*User, error) {
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := encoder.Encode(password)
 	if err != nil {
 		log.Println("generate hash error", err)
 		return nil, err
 	}
 	return &User{
 		Login:        login,
-		PasswordHash: string(hash),
+		PasswordHash: hash,
 		CreatedAt:    time.Now(),
 		UpdateAt:     time.Now(),
 	}, nil

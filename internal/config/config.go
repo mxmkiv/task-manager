@@ -13,8 +13,6 @@ type ServiceConfig struct {
 	DbConnectionUrl string
 }
 
-// db link config
-
 func NewServiceConfig() *ServiceConfig {
 
 	godotenv.Load(".env")

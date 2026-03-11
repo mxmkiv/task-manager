@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"task-manager/internal/auth"
 	"task-manager/internal/config"
 	"task-manager/internal/handler"
 	"task-manager/internal/repository"
@@ -27,8 +28,9 @@ func main() {
 		log.Fatal("database connection error", dbErr)
 	}
 
+	userEncoder := auth.NewUserEncoder()
 	userRepo := repository.NewUserRepository(dbPool)
-	srv := service.NewAuthService(config.SecretKey, userRepo)
+	srv := service.NewAuthService(config.SecretKey, userRepo, userEncoder)
 	handler := handler.NewHandler(srv)
 
 	// services
