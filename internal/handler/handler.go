@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"task-manager/internal/model"
 	"task-manager/internal/service"
 
@@ -62,6 +63,38 @@ func (h *Handler) AllUsersHandler(ctx *echo.Context) error {
 	response, err := h.userSrv.GetAllUsers()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ctx.JSON(http.StatusOK, response)
+
+}
+
+func (h *Handler) UserById(ctx *echo.Context) error {
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect id")
+	}
+
+	response, err := h.userSrv.GetUserById(id)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, response)
+}
+
+func (h *Handler) CreateAdmin(ctx *echo.Context) error {
+
+	var getUserData model.RequestData
+	err := ctx.Bind(&getUserData)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid json format")
+	}
+
+	response, err := h.authSrv.AdminRegister(&getUserData)
+	if err != nil {
+		return err
 	}
 
 	return ctx.JSON(http.StatusOK, response)

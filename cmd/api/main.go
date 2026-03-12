@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"task-manager/internal/auth"
 	"task-manager/internal/config"
+	"task-manager/internal/encoder"
 	"task-manager/internal/handler"
 	"task-manager/internal/repository"
 	"task-manager/internal/routes"
@@ -28,7 +28,7 @@ func main() {
 		log.Fatal("database connection error", dbErr)
 	}
 
-	userEncoder := auth.NewBcryptEncoder()
+	userEncoder := encoder.NewBcryptEncoder()
 	repository := repository.NewUserRepository(dbPool)
 	userService := service.NewUserService(repository)
 	authService := service.NewAuthService(config.SecretKey, repository, userEncoder)
@@ -37,7 +37,7 @@ func main() {
 	// services
 	// logger
 
-	routes.Setup(e, handler)
+	routes.Setup(e, handler, config)
 
 	err := e.Start(config.ServicePort)
 	if err != nil {

@@ -45,7 +45,7 @@ func (u *UserRepository) GetByLogin(login string) (*model.User, error) {
 
 	user := &model.User{}
 	err := u.db.QueryRow(context.Background(), query, login).Scan(
-		&user.Id, &user.Login, &user.PasswordHash, &user.CreatedAt, &user.UpdateAt,
+		&user.Id, &user.Login, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -76,4 +76,21 @@ func (u *UserRepository) GetAllUsers() (*[]model.User, error) {
 	}
 
 	return &res, nil
+}
+
+func (u *UserRepository) GetUserById(id int) (*model.User, error) {
+	query := "SELECT * FROM users WHERE id = $1"
+
+	user := &model.User{}
+	err := u.db.QueryRow(context.Background(), query, id).Scan(
+		&user.Id, &user.Login, &user.PasswordHash, &user.Role, &user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("no user founds")
+		}
+		return nil, err
+	}
+
+	return user, nil
 }

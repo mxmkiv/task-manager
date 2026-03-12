@@ -2,8 +2,10 @@ package model
 
 import (
 	"log"
-	"task-manager/internal/auth"
+	"task-manager/internal/encoder"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type User struct {
@@ -12,7 +14,7 @@ type User struct {
 	PasswordHash string    `json:"-"`
 	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
-	UpdateAt     time.Time `json:"update_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type RoleType int
@@ -27,7 +29,14 @@ func (r RoleType) RoleToString() string {
 	return mass[r]
 }
 
-func NewUser(login, password string, encoder auth.HashEncoder) (*User, error) {
+func NewUser(login, password string, role *string, encoder encoder.HashEncoder) (*User, error) {
+
+	var setRole string
+	if role != nil && *role == "admin" {
+		setRole = AdminType.RoleToString()
+	} else {
+		setRole = UserType.RoleToString()
+	}
 
 	hash, err := encoder.Encode(password)
 	if err != nil {
@@ -37,9 +46,9 @@ func NewUser(login, password string, encoder auth.HashEncoder) (*User, error) {
 	return &User{
 		Login:        login,
 		PasswordHash: hash,
-		Role:         AdminType.RoleToString(),
+		Role:         setRole,
 		CreatedAt:    time.Now(),
-		UpdateAt:     time.Now(),
+		UpdatedAt:    time.Now(),
 	}, nil
 }
 
@@ -64,7 +73,14 @@ type Task struct {
 	Status      TaskStatus `json:"status"`
 	Deadline    time.Time  `json:"deadline"`
 	CreatedAt   time.Time  `json:"created_at"`
-	UpdateAt    time.Time  `json:"update_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+type JwtClaims struct {
+	Id    int
+	Login string
+	Role  string
+	jwt.RegisteredClaims
 }
 
 // DTO
@@ -83,5 +99,5 @@ type UserData struct {
 	Login     string    `json:"login"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdateAt  time.Time `json:"update_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
