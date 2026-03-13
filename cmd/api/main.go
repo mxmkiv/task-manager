@@ -30,7 +30,7 @@ func main() {
 
 	userEncoder := encoder.NewBcryptEncoder()
 	repository := repository.NewUserRepository(dbPool)
-	userService := service.NewUserService(repository)
+	userService := service.NewUserService(repository, userEncoder)
 	authService := service.NewAuthService(config.SecretKey, repository, userEncoder)
 	handler := handler.NewHandler(authService, userService)
 

@@ -11,9 +11,9 @@ import (
 func GenerateToken(id int, login, role, secretKey string) (string, error) {
 
 	claims := &model.JwtClaims{
-		Id:    id,
-		Login: login,
-		Role:  role,
+		UserId: id,
+		Login:  login,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 12)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

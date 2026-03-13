@@ -37,7 +37,7 @@ func (h *Handler) RegisterHandler(ctx *echo.Context) error {
 	return ctx.JSON(http.StatusOK, response)
 }
 
-func (h *Handler) LoginHabdler(ctx *echo.Context) error {
+func (h *Handler) LoginHandler(ctx *echo.Context) error {
 
 	var getUserData model.RequestData
 	err := ctx.Bind(&getUserData)
@@ -52,10 +52,6 @@ func (h *Handler) LoginHabdler(ctx *echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, response)
 
-}
-
-func (h *Handler) TestHandler(ctx *echo.Context) error {
-	return ctx.String(http.StatusOK, "hello world")
 }
 
 func (h *Handler) AllUsersHandler(ctx *echo.Context) error {
@@ -98,5 +94,23 @@ func (h *Handler) CreateAdmin(ctx *echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, response)
+
+}
+
+func (h *Handler) UpdateUserDataHandler(ctx *echo.Context) error {
+
+	var updateData model.UpdateUserRequest
+	err := ctx.Bind(&updateData)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid json format")
+	}
+
+	role := ctx.Get("userRole").(string)
+	requestId := ctx.Get("requestId").(int)
+	if err := h.userSrv.UpdateUserData(&updateData, role, requestId); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return echo.NewHTTPError(http.StatusOK, "data successfully update")
 
 }

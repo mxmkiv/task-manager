@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 	"task-manager/internal/model"
 
 	"github.com/jackc/pgx/v5"
@@ -93,4 +95,47 @@ func (u *UserRepository) GetUserById(id int) (*model.User, error) {
 	}
 
 	return user, nil
+}
+
+func (u *UserRepository) UpdateUserData(updatesList map[string]string, requestId int) error {
+
+	query, args, err := UpdateQueryForm(updatesList, requestId)
+	if err != nil {
+		return err
+	}
+
+	_, err = u.db.Exec(context.Background(), query, args...)
+	if err != nil {
+		return fmt.Errorf("[db] query error %s", err)
+	}
+
+	return nil
+}
+
+func UpdateQueryForm(updatesList map[string]string, requestId int) (string, []any, error) {
+
+	if len(updatesList) == 0 {
+		return "", nil, errors.New("no fields to update")
+	}
+
+	updateParams := make([]string, len(updatesList))
+	args := make([]any, len(updatesList))
+
+	counter := 0
+	for param := range updatesList {
+		paramStr := fmt.Sprintf("%s=$%d", param, counter+1)
+		updateParams[counter] = paramStr
+
+		args[counter] = updatesList[param]
+		counter++
+	}
+
+	args = append(args, requestId)
+
+	query := fmt.Sprintf("UPDATE users SET %s WHERE id=$%d",
+		strings.Join(updateParams, ", "), counter+1,
+	)
+
+	return query, args, nil
+
 }

@@ -77,9 +77,9 @@ type Task struct {
 }
 
 type JwtClaims struct {
-	Id    int
-	Login string
-	Role  string
+	UserId int
+	Login  string
+	Role   string
 	jwt.RegisteredClaims
 }
 
@@ -100,4 +100,10 @@ type UserData struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type UpdateUserRequest struct {
+	Login    *string `json:"login"`
+	Password *string `json:"password"`
+	Role     *string `json:"role"`
 }

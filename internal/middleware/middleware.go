@@ -2,8 +2,10 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"task-manager/internal/auth"
+	"task-manager/internal/model"
 
 	"github.com/labstack/echo/v5"
 )
@@ -61,4 +63,37 @@ func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 
+}
+
+func PermissionMiddleware(secretkey string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c *echo.Context) error {
+			authHeader := c.Request().Header.Get("Authorization")
+			IdStr := c.Param("id")
+			requestId, err := strconv.Atoi(IdStr)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, "incorrect id")
+			}
+
+			token := authHeader[7:]
+			claims, err := auth.ParseToken(token, secretkey)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusUnauthorized, "invalid token")
+			}
+
+			if claims.Role == model.AdminType.RoleToString() {
+				c.Set("userRole", claims.Role)
+				c.Set("requestId", requestId)
+				return next(c)
+			}
+
+			if claims.UserId == requestId {
+				c.Set("userRole", claims.Role)
+				c.Set("requestId", requestId)
+				return next(c)
+			}
+
+			return echo.NewHTTPError(http.StatusForbidden, "access denied")
+		}
+	}
 }

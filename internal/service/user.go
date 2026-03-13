@@ -1,7 +1,9 @@
 package service
 
 import (
+	"errors"
 	"net/http"
+	"task-manager/internal/encoder"
 	"task-manager/internal/model"
 	"task-manager/internal/repository"
 
@@ -10,11 +12,13 @@ import (
 
 type UserService struct {
 	userRepo *repository.UserRepository
+	encoder  encoder.HashEncoder
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
+func NewUserService(repo *repository.UserRepository, encoder encoder.HashEncoder) *UserService {
 	return &UserService{
 		userRepo: repo,
+		encoder:  encoder,
 	}
 }
 
@@ -59,4 +63,60 @@ func (u *UserService) GetUserById(id int) (*model.UserData, error) {
 
 	return resData, nil
 
+}
+
+func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, requestId int) error {
+
+	updatesList := make(map[string]string)
+
+	/*
+
+		new data validation
+
+	*/
+
+	if role != model.AdminType.RoleToString() {
+		if dto.Role != nil {
+			return errors.New("user can't change role")
+		}
+
+		if dto.Login != nil && *dto.Login != "" {
+			updatesList["login"] = *dto.Login
+		}
+
+		if dto.Password != nil && *dto.Password != "" {
+			updatesList["password_hash"] = *dto.Password
+		}
+
+	} else {
+		if dto.Role != nil && *dto.Role != "" {
+			if *dto.Role == model.AdminType.RoleToString() || *dto.Role == model.UserType.RoleToString() {
+				updatesList["role"] = *dto.Role
+			} else {
+				return errors.New("incorrect role")
+			}
+		}
+
+		if dto.Login != nil && *dto.Login != "" {
+			updatesList["login"] = *dto.Login
+		}
+
+		if dto.Password != nil && *dto.Password != "" {
+			hash, err := u.encoder.Encode(*dto.Password)
+			if err != nil {
+				return errors.New("hash generate error")
+			}
+			updatesList["password_hash"] = hash
+		}
+	}
+
+	if len(updatesList) == 0 {
+		return errors.New("no fields to update")
+	}
+
+	if err := u.userRepo.UpdateUserData(updatesList, requestId); err != nil {
+		return err
+	}
+
+	return nil
 }
