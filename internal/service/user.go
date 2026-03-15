@@ -85,7 +85,11 @@ func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, 
 		}
 
 		if dto.Password != nil && *dto.Password != "" {
-			updatesList["password_hash"] = *dto.Password
+			hash, err := u.encoder.Encode(*dto.Password)
+			if err != nil {
+				return errors.New("hash generate error")
+			}
+			updatesList["password_hash"] = hash
 		}
 
 	} else {
