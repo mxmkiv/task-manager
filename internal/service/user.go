@@ -124,3 +124,13 @@ func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, 
 
 	return nil
 }
+
+func (u *UserService) DeleteUser(requestId int, role string) error {
+
+	err := u.userRepo.DeleteUser(requestId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

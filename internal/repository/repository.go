@@ -139,3 +139,16 @@ func UpdateQueryForm(updatesList map[string]string, requestId int) (string, []an
 	return query, args, nil
 
 }
+
+func (u *UserRepository) DeleteUser(requestId int) error {
+
+	query := "DELETE FROM users WHERE id=$1"
+
+	_, err := u.db.Exec(context.Background(), query, requestId)
+	if err != nil {
+		return fmt.Errorf("[db] query error %s", err)
+	}
+
+	return nil
+
+}
