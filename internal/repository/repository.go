@@ -97,9 +97,9 @@ func (u *UserRepository) GetUserById(id int) (*model.User, error) {
 	return user, nil
 }
 
-func (u *UserRepository) UpdateUserData(updatesList map[string]string, requestId int) error {
+func (u *UserRepository) UpdateUserData(updateList *[]model.UpdateFields, requestId int) error {
 
-	query, args, err := UpdateQueryForm(updatesList, requestId)
+	query, args, err := UpdateQueryForm(updateList, requestId)
 	if err != nil {
 		return err
 	}
@@ -112,28 +112,28 @@ func (u *UserRepository) UpdateUserData(updatesList map[string]string, requestId
 	return nil
 }
 
-func UpdateQueryForm(updatesList map[string]string, requestId int) (string, []any, error) {
+func UpdateQueryForm(updateList *[]model.UpdateFields, requestId int) (string, []any, error) {
 
-	if len(updatesList) == 0 {
+	if len(*updateList) == 0 {
 		return "", nil, errors.New("no fields to update")
 	}
 
-	updateParams := make([]string, len(updatesList))
-	args := make([]any, len(updatesList))
+	updateParams := make([]string, len(*updateList))
+	args := make([]any, len(*updateList))
 
 	counter := 0
-	for param := range updatesList {
-		paramStr := fmt.Sprintf("%s=$%d", param, counter+1)
+	for _, update := range *updateList {
+		paramStr := fmt.Sprintf("%s=$%d", update.FieldName, counter+1)
 		updateParams[counter] = paramStr
 
-		args[counter] = updatesList[param]
+		args[counter] = update.Data
 		counter++
 	}
 
 	args = append(args, requestId)
 
 	query := fmt.Sprintf("UPDATE users SET %s WHERE id=$%d",
-		strings.Join(updateParams, ", "), counter+1,
+		strings.Join(updateParams, ", "), len(*updateList)+1,
 	)
 
 	return query, args, nil

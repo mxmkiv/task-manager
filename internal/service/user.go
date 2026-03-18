@@ -67,58 +67,40 @@ func (u *UserService) GetUserById(id int) (*model.UserData, error) {
 
 func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, requestId int) error {
 
-	updatesList := make(map[string]string)
-
-	/*
-
-		new data validation
-
-	*/
-
-	if role != model.AdminType.RoleToString() {
+	// role check
+	if role == model.UserType.RoleToString() {
 		if dto.Role != nil {
-			return errors.New("user can't change role")
-		}
-
-		if dto.Login != nil && *dto.Login != "" {
-			updatesList["login"] = *dto.Login
-		}
-
-		if dto.Password != nil && *dto.Password != "" {
-			hash, err := u.encoder.Encode(*dto.Password)
-			if err != nil {
-				return errors.New("hash generate error")
-			}
-			updatesList["password_hash"] = hash
-		}
-
-	} else {
-		if dto.Role != nil && *dto.Role != "" {
-			if *dto.Role == model.AdminType.RoleToString() || *dto.Role == model.UserType.RoleToString() {
-				updatesList["role"] = *dto.Role
-			} else {
-				return errors.New("incorrect role")
-			}
-		}
-
-		if dto.Login != nil && *dto.Login != "" {
-			updatesList["login"] = *dto.Login
-		}
-
-		if dto.Password != nil && *dto.Password != "" {
-			hash, err := u.encoder.Encode(*dto.Password)
-			if err != nil {
-				return errors.New("hash generate error")
-			}
-			updatesList["password_hash"] = hash
+			return errors.New("user cant change role")
 		}
 	}
 
-	if len(updatesList) == 0 {
-		return errors.New("no fields to update")
+	// validation
+	if dto.Login != nil && (len(*dto.Login) < 3 || len(*dto.Login) > 20) {
+		return echo.NewHTTPError(http.StatusBadRequest, "login must be between 3 and 20 characters")
+	}
+	if dto.Password != nil && len(*dto.Password) < 5 {
+		return echo.NewHTTPError(http.StatusBadRequest, "password must be at least 5 characters")
 	}
 
-	if err := u.userRepo.UpdateUserData(updatesList, requestId); err != nil {
+	//data transfrom
+	var updateList []model.UpdateFields
+
+	if dto.Login != nil {
+		updateList = append(updateList, model.UpdateFields{FieldName: "login", Data: dto.Login})
+	}
+	if dto.Password != nil {
+		hash, err := u.encoder.Encode(*dto.Password)
+		if err != nil {
+			return errors.New("hash generate error")
+		}
+		updateList = append(updateList, model.UpdateFields{FieldName: "password_hash", Data: hash})
+	}
+	if dto.Role != nil {
+		updateList = append(updateList, model.UpdateFields{FieldName: "role", Data: dto.Role})
+	}
+
+	err := u.userRepo.UpdateUserData(&updateList, requestId)
+	if err != nil {
 		return err
 	}
 

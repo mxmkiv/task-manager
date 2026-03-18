@@ -19,8 +19,10 @@ func Setup(e *echo.Echo, h *handler.Handler, config *config.ServiceConfig) {
 
 	//protect
 	protect := e.Group("", middleware.AuthWiddleware(config.SecretKey))
+	//users
 	protect.GET("/users", h.AllUsersHandler, middleware.AdminOnly)
 	protect.GET("/users/:id", h.UserById, middleware.AdminOnly)
 	protect.PATCH("/users/:id", h.UpdateUserDataHandler, middleware.PermissionMiddleware(config.SecretKey))
 	protect.DELETE("/users/:id", h.DeleteUserHandler, middleware.PermissionMiddleware(config.SecretKey))
+	//tasks
 }

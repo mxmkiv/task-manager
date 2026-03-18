@@ -111,6 +111,7 @@ func (h *Handler) UpdateUserDataHandler(ctx *echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	// updated data response
 	return ctx.String(http.StatusOK, "data successfully update")
 
 }

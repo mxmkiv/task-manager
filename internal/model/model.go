@@ -107,3 +107,8 @@ type UpdateUserRequest struct {
 	Password *string `json:"password"`
 	Role     *string `json:"role"`
 }
+
+type UpdateFields struct {
+	FieldName string
+	Data      any
+}
