@@ -65,21 +65,21 @@ func (u *UserService) GetUserById(id int) (*model.UserData, error) {
 
 }
 
-func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, requestId int) error {
+func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, requestId int) (*model.UserData, error) {
 
 	// role check
 	if role == model.UserType.RoleToString() {
 		if dto.Role != nil {
-			return errors.New("user cant change role")
+			return nil, errors.New("user cant change role")
 		}
 	}
 
 	// validation
 	if dto.Login != nil && (len(*dto.Login) < 3 || len(*dto.Login) > 20) {
-		return echo.NewHTTPError(http.StatusBadRequest, "login must be between 3 and 20 characters")
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "login must be between 3 and 20 characters")
 	}
 	if dto.Password != nil && len(*dto.Password) < 5 {
-		return echo.NewHTTPError(http.StatusBadRequest, "password must be at least 5 characters")
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "password must be at least 5 characters")
 	}
 
 	//data transfrom
@@ -91,7 +91,7 @@ func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, 
 	if dto.Password != nil {
 		hash, err := u.encoder.Encode(*dto.Password)
 		if err != nil {
-			return errors.New("hash generate error")
+			return nil, errors.New("hash generate error")
 		}
 		updateList = append(updateList, model.UpdateFields{FieldName: "password_hash", Data: hash})
 	}
@@ -99,12 +99,12 @@ func (u *UserService) UpdateUserData(dto *model.UpdateUserRequest, role string, 
 		updateList = append(updateList, model.UpdateFields{FieldName: "role", Data: dto.Role})
 	}
 
-	err := u.userRepo.UpdateUserData(&updateList, requestId)
+	response, err := u.userRepo.UpdateUserData(&updateList, requestId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return response, nil
 }
 
 func (u *UserService) DeleteUser(requestId int, role string) error {

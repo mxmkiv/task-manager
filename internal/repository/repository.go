@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const DUPLICATE_ERROR_CODE = "23505"
+const DUPLICATE_ERROR_CODE string = "23505"
 
 type UserRepository struct {
 	db *pgxpool.Pool
@@ -97,21 +97,31 @@ func (u *UserRepository) GetUserById(id int) (*model.User, error) {
 	return user, nil
 }
 
-func (u *UserRepository) UpdateUserData(updateList *[]model.UpdateFields, requestId int) error {
+func (u *UserRepository) UpdateUserData(updateList *[]model.UpdateFields, requestId int) (*model.UserData, error) {
 
 	query, args, err := UpdateQueryForm(updateList, requestId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = u.db.Exec(context.Background(), query, args...)
+	user := &model.UserData{}
+	err = u.db.QueryRow(context.Background(), query, args...).Scan(
+		&user.Id, &user.Login, &user.Role, &user.UpdatedAt, &user.CreatedAt,
+	)
 	if err != nil {
-		return fmt.Errorf("[db] query error %s", err)
+		var dbErr *pgconn.PgError
+		if errors.As(err, &dbErr) {
+			if dbErr.Code == DUPLICATE_ERROR_CODE {
+				return nil, errors.New("user with this login already exists")
+			}
+		}
+		return nil, fmt.Errorf("[db] query errors %s", err)
 	}
 
-	return nil
+	return user, nil
 }
 
+// query generator
 func UpdateQueryForm(updateList *[]model.UpdateFields, requestId int) (string, []any, error) {
 
 	if len(*updateList) == 0 {
@@ -132,7 +142,7 @@ func UpdateQueryForm(updateList *[]model.UpdateFields, requestId int) (string, [
 
 	args = append(args, requestId)
 
-	query := fmt.Sprintf("UPDATE users SET %s WHERE id=$%d",
+	query := fmt.Sprintf("UPDATE users SET %s, updated_at = NOW() WHERE id=$%d RETURNING id, login, role, updated_at, created_at",
 		strings.Join(updateParams, ", "), len(*updateList)+1,
 	)
 

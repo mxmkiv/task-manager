@@ -107,19 +107,20 @@ func (h *Handler) UpdateUserDataHandler(ctx *echo.Context) error {
 
 	role := ctx.Get("userRole").(string)
 	requestId := ctx.Get("requestId").(int)
-	if err := h.userSrv.UpdateUserData(&updateData, role, requestId); err != nil {
+
+	response, err := h.userSrv.UpdateUserData(&updateData, role, requestId)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	// updated data response
-	return ctx.String(http.StatusOK, "data successfully update")
-
+	return ctx.JSON(http.StatusOK, response)
 }
 
 func (h *Handler) DeleteUserHandler(ctx *echo.Context) error {
 
 	role := ctx.Get("userRole").(string)
 	requestId := ctx.Get("requestId").(int)
+
 	if err := h.userSrv.DeleteUser(requestId, role); err != nil {
 		return err
 	}
